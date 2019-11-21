@@ -248,11 +248,11 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                 ],
                 DryRun=False
             )
-            print("Created new SecurityGroup")
+            print("Created new SecurityGroups")
 
         except ClientError:
 
-            print("SecurityGroup already exists")
+            print("SecurityGroups already exists")
             
             response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-WS'])])
             group_id = response['SecurityGroups'][0]['GroupId']
@@ -260,14 +260,19 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
             response = secgroup.delete(
                 DryRun=False
                 )    
-            response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-DB'])])
-            group_id = response['SecurityGroups'][0]['GroupId']
-            secgroup = ec2.SecurityGroup(group_id)  
-            response = secgroup.delete(
-                DryRun=False
-                )    
+            try:
+                time.sleep(10)
+                response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-DB'])])
+                group_id = response['SecurityGroups'][0]['GroupId']
+                secgroup = ec2.SecurityGroup(group_id)  
+                response = secgroup.delete(
+                    DryRun=False
+                    )  
+            except ClientError:
+                    print("hmm")
+
         
-            print("     Deleted existing SecurityGroup")
+            print("     Deleted existing SecurityGroups")
             
             response1 = ec2.create_security_group(GroupName='SEC-leite-WS',
                                                 Description='DESCRIPTION',
@@ -275,7 +280,7 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                                                 DryRun=False
                                                 )
 
-            response2 = ec2.create_security_group(GroupName='SEC-leite-WS',
+            response2 = ec2.create_security_group(GroupName='SEC-leite-DB',
                                                 Description='DESCRIPTION',
                                                 VpcId=vpc,
                                                 DryRun=False
@@ -310,7 +315,7 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                 ],
                 DryRun=False
             )
-            print("     Created new SecurityGroup")
+            print("     Created new SecurityGroups")
 
 def delete_instances(ec2):
 

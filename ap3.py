@@ -98,18 +98,19 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
         except ClientError:
 
             print("FW SecurityGroup already exists")
-            group_name = 'SEC-leite'
+            group_name = 'SEC-leite' ###
 
             response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=[group_name])])
             group_id = response['SecurityGroups'][0]['GroupId']
+            print(group_id)
             secgroup = ec2.SecurityGroup(group_id)  
             response = secgroup.delete(
                 DryRun=False
                 )    
-        
+
             print("     Deleted existing FW SecurityGroup")
             
-            response = ec2.create_security_group(GroupName='SEC-leite',
+            response = ec2.create_security_group(GroupName='SEC-leite', ####
                                                 Description='DESCRIPTION',
                                                 VpcId=vpc,
                                                 DryRun=False
@@ -168,9 +169,7 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                 time.sleep(10)
                 print("     Load Balancer deleted")
             except:
-                print("\n")
-
-            group_name = 'SEC-leite'
+                print("\n +++++++++++++++")
 
             response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
             group_id = response['SecurityGroups'][0]['GroupId']
@@ -219,7 +218,7 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                     {'IpProtocol': 'tcp',
                     'FromPort': 5000,
                     'ToPort': 5000,
-                    'IpRanges': [{'CidrIp':'0.0.0.0/0'}]}, #eipFW["PublicIp"]+"/32"}]},## IP DO FOWARD
+                    'IpRanges': [{'CidrIp':eipFW["PublicIp"]+"/32"}]},## IP DO FOWARDer
                     {'IpProtocol': 'tcp',
                     'FromPort': 22,
                     'ToPort': 22,
@@ -421,7 +420,7 @@ def create_Fowarder(ec2,client, eipws,eipFW):  # =~ 2 min pra subir o servidor
     tag_owner = {"Key": "Owner", "Value": "guilhermepl3"}
     tag_name = {"Key": "Name", "Value": "Fowarder-gpl"}
     instance_type = "t2.micro"
-    group_name = 'SEC-leite' # Nome do Security group
+    group_name = 'SEC-leite-lb' # Nome do Security group
     key_name = 'key-leite-ohio' # Nome do key pair
 
     response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=[group_name])]) # Pega o id do security group
@@ -545,7 +544,7 @@ python3 /Spark_REST/fowarder.py
                     },
                     TargetType='instance'
                     )
-    
+
     print("     New Target Group created")
 
     print("Creating Load Balancer...")
@@ -594,6 +593,81 @@ python3 /Spark_REST/fowarder.py
         )
 
     print("     Load Balancer created")
+
+
+    Arnresponse = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
+    Arn = Arnresponse['TargetGroups'][0]['TargetGroupArn']
+    
+    response = auto_client.create_auto_scaling_group(
+            AutoScalingGroupName='AutoScaling-gpl',
+            LaunchConfigurationName='LaunchConfig-gpl',
+            # LaunchTemplate={
+            #     'LaunchTemplateId': 'string',
+            #     'LaunchTemplateName': 'string',
+            #     'Version': 'string'
+            # },
+            # MixedInstancesPolicy={
+            #     'LaunchTemplate': {
+            #         'LaunchTemplateSpecification': {
+            #             'LaunchTemplateId': 'string',
+            #             'LaunchTemplateName': 'string',
+            #             'Version': 'string'
+            #         },
+            #         'Overrides': [
+            #             {
+            #                 'InstanceType': 'string',
+            #                 'WeightedCapacity': 'string'
+            #             },
+            #         ]
+            #     },
+            #     'InstancesDistribution': {
+            #         'OnDemandAllocationStrategy': 'string',
+            #         'OnDemandBaseCapacity': 123,
+            #         'OnDemandPercentageAboveBaseCapacity': 123,
+            #         'SpotAllocationStrategy': 'string',
+            #         'SpotInstancePools': 123,
+            #         'SpotMaxPrice': 'string'
+            #     }
+            # },
+            #InstanceId='string',
+            MinSize=1,
+            MaxSize=3,
+            DesiredCapacity=1,
+            DefaultCooldown=300,
+            AvailabilityZones=['us-east-2a','us-east-2b','us-east-2c'],
+            LoadBalancerNames=['LoadBalancer-gpl'],
+            TargetGroupARNs=[Arn],
+            HealthCheckType='EC2',
+            HealthCheckGracePeriod=0,
+           # PlacementGroup='string',
+            #VPCZoneIdentifier='string'#,
+        #    TerminationPolicies=[
+        #         'string',
+        #     ],
+          #  NewInstancesProtectedFromScaleIn=True|False,
+            # LifecycleHookSpecificationList=[
+            #     {
+            #         'LifecycleHookName': 'string',
+            #         'LifecycleTransition': 'string',
+            #         'NotificationMetadata': 'string',
+            #         'HeartbeatTimeout': 123,
+            #         'DefaultResult': 'string',
+            #         'NotificationTargetARN': 'string',
+            #         'RoleARN': 'string'
+            #     },
+            # ],
+            # Tags=[
+            #     {
+            #         'ResourceId': 'string',
+            #         'ResourceType': 'string',
+            #         'Key': 'string',
+            #         'Value': 'string',
+            #         'PropagateAtLaunch': True|False
+            #     },
+            # ],
+            # ServiceLinkedRoleARN='string',
+            # MaxInstanceLifetime=123
+        )
 
 
     print("     Done!")

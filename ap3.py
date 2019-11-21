@@ -170,6 +170,17 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                 print("     Load Balancer deleted")
             except:
                 print("\n +++++++++++++++")
+            try:
+                auto_client = boto3.client('autoscaling', region_name='us-east-2')
+                response = auto_client.delete_auto_scaling_group(
+                            AutoScalingGroupName='AutoScaling-gpl',
+                            ForceDelete=True
+                            )
+                print("     Auto Scaling Group already exists")
+                print("     Auto Scaling Group deleted")
+                time.sleep(60)
+            except:
+                print("\n ===============")
 
             response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
             group_id = response['SecurityGroups'][0]['GroupId']
@@ -193,6 +204,10 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
                     'FromPort': 22,
                     'ToPort': 22,
                     'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
+                    {'IpProtocol': 'tcp',#####
+                    'FromPort': 5000,
+                    'ToPort': 5000,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}, 
                     {'IpProtocol': 'tcp',
                     'FromPort': 80,
                     'ToPort': 80,
@@ -434,7 +449,7 @@ echo "export serv_addr={}" >> ~/.bashrc
 export serv_addr={}
 python3 /Spark_REST/fowarder.py
 '''.format(eipws["PublicIp"],eipws["PublicIp"])#python3 /Spark_REST/fowarder.py
-
+    print("Created new instance: Fowarder")
     instance = ec2.create_instances(ImageId=ami,
                         MinCount=1,MaxCount=1,    
                         InstanceType=instance_type, 
@@ -443,13 +458,34 @@ python3 /Spark_REST/fowarder.py
                         TagSpecifications=[{'ResourceType': 'instance','Tags': [tag_owner,tag_name]}],
                         UserData=commands
                         )
-    print("Creating new instance: Fowarder")
     instance[0].wait_until_running()
-
     client.associate_address(
      DryRun = False,
      InstanceId = instance[0].id,
      AllocationId = eipFW["AllocationId"])
+    print("     Done !")
+
+    commands = '''#!/bin/bash
+sudo su
+git clone https://github.com/guipleite/Spark_REST.git
+sudo chmod +x /Spark_REST/installer.sh
+sudo /Spark_REST/installer.sh
+echo "export serv_addr={}" >> ~/.bashrc
+export serv_addr={}
+python3 /Spark_REST/fowarder.py
+'''.format(eipFW["PublicIp"],eipFW["PublicIp"])#python3 /Spark_REST/fowarder.py
+
+    instance = ec2.create_instances(ImageId=ami,
+                        MinCount=1,MaxCount=1,    
+                        InstanceType=instance_type, 
+                        KeyName=key_name,
+                        SecurityGroupIds=[group_id],
+                        TagSpecifications=[{'ResourceType': 'instance','Tags': [tag_owner,{"Key": "Name", "Value": "Fowarder-LB-gpl"}]}],
+                        UserData=commands
+                        )
+
+    print("Creating new instance: LB-fowarder")
+    instance[0].wait_until_running()
 
     print("     Done!")
     print("Creating Image")
@@ -594,9 +630,20 @@ python3 /Spark_REST/fowarder.py
 
     print("     Load Balancer created")
 
-
+    print("Creting Auto Scaling Group")
     Arnresponse = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
     Arn = Arnresponse['TargetGroups'][0]['TargetGroupArn']
+
+    try:
+        response = auto_client.delete_auto_scaling_group(
+                    AutoScalingGroupName='AutoScaling-gpl',
+                    ForceDelete=True
+                    )
+        print("     Auto Scaling Group already exists")
+        print("     Auto Scaling Group deleted")
+
+    except:
+        print("hmmm")
     
     response = auto_client.create_auto_scaling_group(
             AutoScalingGroupName='AutoScaling-gpl',
@@ -611,6 +658,7 @@ python3 /Spark_REST/fowarder.py
             HealthCheckType='EC2',
             HealthCheckGracePeriod=0,
         )
+    print("Creted new Auto Scaling Group")
 
 
     print("     Done!")

@@ -601,35 +601,6 @@ python3 /Spark_REST/fowarder.py
     response = auto_client.create_auto_scaling_group(
             AutoScalingGroupName='AutoScaling-gpl',
             LaunchConfigurationName='LaunchConfig-gpl',
-            # LaunchTemplate={
-            #     'LaunchTemplateId': 'string',
-            #     'LaunchTemplateName': 'string',
-            #     'Version': 'string'
-            # },
-            # MixedInstancesPolicy={
-            #     'LaunchTemplate': {
-            #         'LaunchTemplateSpecification': {
-            #             'LaunchTemplateId': 'string',
-            #             'LaunchTemplateName': 'string',
-            #             'Version': 'string'
-            #         },
-            #         'Overrides': [
-            #             {
-            #                 'InstanceType': 'string',
-            #                 'WeightedCapacity': 'string'
-            #             },
-            #         ]
-            #     },
-            #     'InstancesDistribution': {
-            #         'OnDemandAllocationStrategy': 'string',
-            #         'OnDemandBaseCapacity': 123,
-            #         'OnDemandPercentageAboveBaseCapacity': 123,
-            #         'SpotAllocationStrategy': 'string',
-            #         'SpotInstancePools': 123,
-            #         'SpotMaxPrice': 'string'
-            #     }
-            # },
-            #InstanceId='string',
             MinSize=1,
             MaxSize=3,
             DesiredCapacity=1,
@@ -639,34 +610,6 @@ python3 /Spark_REST/fowarder.py
             TargetGroupARNs=[Arn],
             HealthCheckType='EC2',
             HealthCheckGracePeriod=0,
-           # PlacementGroup='string',
-            #VPCZoneIdentifier='string'#,
-        #    TerminationPolicies=[
-        #         'string',
-        #     ],
-          #  NewInstancesProtectedFromScaleIn=True|False,
-            # LifecycleHookSpecificationList=[
-            #     {
-            #         'LifecycleHookName': 'string',
-            #         'LifecycleTransition': 'string',
-            #         'NotificationMetadata': 'string',
-            #         'HeartbeatTimeout': 123,
-            #         'DefaultResult': 'string',
-            #         'NotificationTargetARN': 'string',
-            #         'RoleARN': 'string'
-            #     },
-            # ],
-            # Tags=[
-            #     {
-            #         'ResourceId': 'string',
-            #         'ResourceType': 'string',
-            #         'Key': 'string',
-            #         'Value': 'string',
-            #         'PropagateAtLaunch': True|False
-            #     },
-            # ],
-            # ServiceLinkedRoleARN='string',
-            # MaxInstanceLifetime=123
         )
 
 

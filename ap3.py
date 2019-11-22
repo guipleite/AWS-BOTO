@@ -370,6 +370,11 @@ sudo chmod +x /Spark_REST/installer.sh
 sudo /Spark_REST/installer.sh
 echo "export serv_addr={}" >> ~/.bashrc
 export serv_addr={}
+echo $serv_addr > /Spark_REST/addr
+mv Spark_REST/ws.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl start ws.service
+sudo systemctl enable ws.service
 python3 /Spark_REST/aps1.py
 '''.format(eipDB["PublicIp"],eipDB["PublicIp"])#python3 /Spark_REST/aps1.py
 
@@ -406,6 +411,10 @@ def create_database(ec2,client,eipDB,eipWS): # =~ 2min? pra subir
 git clone https://github.com/guipleite/Spark_REST.git
 sudo chmod +x /Spark_REST/dbinstaller.sh
 sudo /Spark_REST/dbinstaller.sh
+mv Spark_REST/db.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl start db.service
+sudo systemctl enable db.service
 sudo mongod --port 27017 --dbpath /data/db --bind_ip_all
 '''#sudo mongod --port 27017 --dbpath /data/db --bind_ip_all
 
@@ -447,6 +456,11 @@ sudo chmod +x /Spark_REST/installer.sh
 sudo /Spark_REST/installer.sh
 echo "export serv_addr={}" >> ~/.bashrc
 export serv_addr={}
+echo $serv_addr > /Spark_REST/addr
+mv Spark_REST/fw.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl start fw.service
+sudo systemctl enable fw.service
 python3 /Spark_REST/fowarder.py
 '''.format(eipws["PublicIp"],eipws["PublicIp"])#python3 /Spark_REST/fowarder.py
     print("Created new instance: Fowarder")
@@ -472,6 +486,11 @@ sudo chmod +x /Spark_REST/installer.sh
 sudo /Spark_REST/installer.sh
 echo "export serv_addr={}" >> ~/.bashrc
 export serv_addr={}
+echo $serv_addr > /Spark_REST/addr
+mv Spark_REST/fw.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl start fw.service
+sudo systemctl enable fw.service
 python3 /Spark_REST/fowarder.py
 '''.format(eipFW["PublicIp"],eipFW["PublicIp"])#python3 /Spark_REST/fowarder.py
 
@@ -507,6 +526,8 @@ python3 /Spark_REST/fowarder.py
         print("     New Image created")
         ami_id = res['ImageId']
     print("     Image id: "+ami_id)
+
+    ec2.instances.filter(InstanceIds=[instance[0].id]).terminate()
 
     print("Creating Launch Confuguration...")
     auto_client = boto3.client('autoscaling', region_name='us-east-2')

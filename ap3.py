@@ -332,26 +332,37 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
             print("     Created new SecurityGroups")
 
 def delete_instances(ec2):
+    client = boto3.client('ec2')
+    response = client.describe_addresses()
 
-    instances = ec2.instances.filter(Filters=[{"Name": "tag:Owner", "Values": ["guilhermepl3"]}])
+    running_instances = ec2.instances.filter(Filters=[{
+        'Name': 'instance-state-name',
+        'Values': ['running']},
+        {"Name": "tag:Owner",
+        "Values": ["guilhermepl3"]}])
 
-    RunningInstances = [instance.id for instance in instances if instance.state['Name'] == 'running']
+    
+    running_instances = ec2.instances.filter(Filters=[{
+        'Name': 'instance-state-name',
+        'Values': ['running']},
+        {"Name": "tag:Owner",
+        "Values": ["guilhermepl3"]}])
 
-    if len(RunningInstances) > 0:
-
-        shuttingDown = ec2.instances.filter(InstanceIds=RunningInstances).terminate()
+    for instance in running_instances:
+        for addr in response['Addresses']:
+            if addr['PublicIp']==instance.public_ip_address:
+                client.release_address(
+                    AllocationId=addr['AllocationId'],
+                    DryRun=False
+                )
+        ec2.instances.filter(InstanceIds=[instance.id]).terminate()
+        print("Terminating instances...")
+        time.sleep(40)
         #print (shuttingDown)
     else:
         print ("No running instance with this tag")
+        time.sleep(10)
 
-    time.sleep(2)
-    if len([instance.id for instance in instances if instance.state['Name'] == 'shutting-down'])>0:
-        print("Terminating instances...")
-        time.sleep(30)
-
-    if len([instance.id for instance in instances if instance.state['Name'] == 'shutting-down'])>0:
-        print("Terminating instances....")
-        time.sleep(20)
 
 def create_Instance(ec2,client,eipWS,eipDB):  # =~ 2 min pra subir o servidor
 
@@ -725,55 +736,3 @@ create_KeyPair(ec2_ohio,"o")
 
 create_Fowarder(ec2_ohio,client_ohio,eipWS,eipFW)
 
-
-def nuke(ec2,ec2_ohio,client,client_ohio):
-    try:
-        delete_instances(ec2)
-    except:
-        print("a")
-    try:
-        delete_instances(ec2_ohio)
-    except:
-        print("a")
-
-
-    Arnresponse = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
-    Arn = Arnresponse['TargetGroups'][0]['TargetGroupArn']
-    try:
-        response = auto_client.delete_auto_scaling_group(
-                    AutoScalingGroupName='AutoScaling-gpl',
-                    ForceDelete=True
-                    )
-    except:
-        print("a")
-    response = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
-    response = elastic_client.delete_target_group(TargetGroupArn=response['TargetGroups'][0]['TargetGroupArn'])
-    response = elb_client.delete_load_balancer(LoadBalancerName='LoadBalancer-gpl')
-    response = auto_client.delete_launch_configuration(LaunchConfigurationName='LaunchConfig-gpl')
-    response = client.describe_images(Filters=[{'Name': 'name','Values': ['fowarder_image']}])
-    image_id = response['Images'][0]['ImageId']
-    client.deregister_image(ImageId = image_id)
-    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
-    group_id = response['SecurityGroups'][0]['GroupId']
-    secgroup = ec2.SecurityGroup(group_id)  
-    response = secgroup.delete(
-        DryRun=False
-        )     
-    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
-    group_id = response['SecurityGroups'][0]['GroupId']
-    secgroup = ec2.SecurityGroup(group_id)  
-    response = secgroup.delete(
-        DryRun=False
-        )     
-    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
-    group_id = response['SecurityGroups'][0]['GroupId']
-    secgroup = ec2.SecurityGroup(group_id)  
-    response = secgroup.delete(
-        DryRun=False
-        )     
-    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
-    group_id = response['SecurityGroups'][0]['GroupId']
-    secgroup = ec2.SecurityGroup(group_id)  
-    response = secgroup.delete(
-        DryRun=False
-        )    

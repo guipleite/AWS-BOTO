@@ -27,3 +27,12 @@ aws configure
 ```
 python3 ap3.py
 ```
+
+### Listar todas as tarefas:
+```
+< IP do LoadBalancer >/todo/api/tasks/
+```
+### Mostrar uma tarefa especifica:
+```
+< IP do LoadBalancer >/todo/api/tasks/< id >
+```

@@ -331,8 +331,8 @@ def create_SecGroup(ec2,client,vpc,r,eipDB,eipWS,eipFW):
             )
             print("     Created new SecurityGroups")
 
-def delete_instances(ec2):
-    client = boto3.client('ec2')
+def delete_instances(ec2,client):
+    
     response = client.describe_addresses()
 
     running_instances = ec2.instances.filter(Filters=[{
@@ -697,22 +697,23 @@ python3 /Spark_REST/fowarder.py
 
 
 eipWS = client.allocate_address(DryRun=False, Domain='vpc')
-eipDB = client.allocate_address(DryRun=False, Domain='vpc')
-eipFW = client_ohio.allocate_address(DryRun=False, Domain='vpc')
-
 print("   eipWS:"+eipWS["PublicIp"])
+
+eipDB = client.allocate_address(DryRun=False, Domain='vpc')
 print("   eipDB:"+eipDB["PublicIp"])
+
+eipFW = client_ohio.allocate_address(DryRun=False, Domain='vpc')
 print("   eipFW:"+eipFW["PublicIp"])
 
 print("\n N. Virginia")
 
-delete_instances(ec2)
+delete_instances(ec2,client)
 vpc = "vpc-ec925f96"
 try:
     create_SecGroup(ec2,client,vpc,"n",eipDB,eipWS,eipFW)
 except:
     print("Instances weren't terminated correctly, trying again")
-    delete_instances(ec2)
+    delete_instances(ec2,client)
     time.sleep(30)
     create_SecGroup(ec2,client,vpc,"n",eipDB,eipWS,eipFW)
 
@@ -724,15 +725,67 @@ print("\n Ohio")
 
 vpc = "vpc-08f8c860"
 
-delete_instances(ec2_ohio)
+delete_instances(ec2_ohio,client_ohio)
 try:
     create_SecGroup(ec2_ohio,client_ohio,vpc,"o",eipDB,eipWS,eipFW)
 except:
     print("Instances in Ohio weren't terminated correctly, trying again")
-    delete_instances(ec2_ohio)
+    delete_instances(ec2_ohio,client_ohio)
     time.sleep(30)
     create_SecGroup(ec2_ohio,client_ohio,vpc,"o",eipDB,eipWS,eipFW)
 create_KeyPair(ec2_ohio,"o")
 
 create_Fowarder(ec2_ohio,client_ohio,eipWS,eipFW)
 
+
+def nuke(ec2,ec2_ohio,client,client_ohio):
+    try:
+        delete_instances(ec2)
+    except:
+        print("a")
+    try:
+        delete_instances(ec2_ohio)
+    except:
+        print("a")
+
+
+    Arnresponse = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
+    Arn = Arnresponse['TargetGroups'][0]['TargetGroupArn']
+    try:
+        response = auto_client.delete_auto_scaling_group(
+                    AutoScalingGroupName='AutoScaling-gpl',
+                    ForceDelete=True
+                    )
+    except:
+        print("a")
+    response = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
+    response = elastic_client.delete_target_group(TargetGroupArn=response['TargetGroups'][0]['TargetGroupArn'])
+    response = elb_client.delete_load_balancer(LoadBalancerName='LoadBalancer-gpl')
+    response = auto_client.delete_launch_configuration(LaunchConfigurationName='LaunchConfig-gpl')
+    response = client.describe_images(Filters=[{'Name': 'name','Values': ['fowarder_image']}])
+    image_id = response['Images'][0]['ImageId']
+    client.deregister_image(ImageId = image_id)
+    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
+    group_id = response['SecurityGroups'][0]['GroupId']
+    secgroup = ec2.SecurityGroup(group_id)  
+    response = secgroup.delete(
+        DryRun=False
+        )     
+    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
+    group_id = response['SecurityGroups'][0]['GroupId']
+    secgroup = ec2.SecurityGroup(group_id)  
+    response = secgroup.delete(
+        DryRun=False
+        )     
+    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
+    group_id = response['SecurityGroups'][0]['GroupId']
+    secgroup = ec2.SecurityGroup(group_id)  
+    response = secgroup.delete(
+        DryRun=False
+        )     
+    response = client.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
+    group_id = response['SecurityGroups'][0]['GroupId']
+    secgroup = ec2.SecurityGroup(group_id)  
+    response = secgroup.delete(
+        DryRun=False
+        )    

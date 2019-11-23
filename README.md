@@ -23,7 +23,7 @@ aws configure
 
 - Default region name : us-east-1
 
-### Rodar o scrip de criação:
+### Rodar o script de criação:
 ```
 python3 ap3.py
 ```

@@ -36,3 +36,8 @@ python3 ap3.py
 ```
 < IP do LoadBalancer >/todo/api/tasks/< id >
 ```
+
+### Apagar tudo que foi criado:
+```
+python3 nuke.py
+```

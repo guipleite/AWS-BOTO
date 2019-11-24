@@ -281,13 +281,6 @@ def delete_instances(ec2,client):
         {"Name": "tag:Owner",
         "Values": ["guilhermepl3"]}])
 
-    
-    running_instances = ec2.instances.filter(Filters=[{
-        'Name': 'instance-state-name',
-        'Values': ['running']},
-        {"Name": "tag:Owner",
-        "Values": ["guilhermepl3"]}])
-
     for instance in running_instances:
         for addr in response['Addresses']:
             if addr['PublicIp']==instance.public_ip_address:
@@ -298,11 +291,10 @@ def delete_instances(ec2,client):
         ec2.instances.filter(InstanceIds=[instance.id]).terminate()
         print("Terminating instances...")
         time.sleep(40)
-        #print (shuttingDown)
+
     else:
         print ("No running instance with this tag")
         time.sleep(10)
-
 
 def create_Instance(ec2,client,eipWS,eipDB):  # =~ 2 min pra subir o servidor
 
@@ -464,6 +456,7 @@ python3 /Spark_REST/fowarder.py
     try:
         print("Creating Image...")
         res = client.create_image(InstanceId=instance[0].id, NoReboot=True, Name="fowarder_image")
+        ami_id = res['ImageId']
         print("Image created")
 
     except:
@@ -519,9 +512,9 @@ python3 /Spark_REST/fowarder.py
                     HealthCheckPort='5000',
                     HealthCheckEnabled=True,
                     HealthCheckPath='/healthcheck/',
-                    HealthCheckIntervalSeconds=30,
+                    HealthCheckIntervalSeconds=10,
                     HealthCheckTimeoutSeconds=5,
-                    HealthyThresholdCount=5,
+                    HealthyThresholdCount=3,
                     UnhealthyThresholdCount=2,
                     Matcher={
                         'HttpCode': '200'
@@ -567,9 +560,9 @@ python3 /Spark_REST/fowarder.py
             SecurityGroups=[group_id],
             Listeners=[
             {
-            'Protocol': 'tcp',
+            'Protocol': 'HTTP',
             'LoadBalancerPort': 80,
-            'InstanceProtocol': 'tcp',
+            'InstanceProtocol': 'HTTP',
             'InstancePort': 5000    
             },
             ],
@@ -588,9 +581,9 @@ python3 /Spark_REST/fowarder.py
             SecurityGroups=[group_id],
             Listeners=[
             {
-            'Protocol': 'tcp',
+            'Protocol': 'HTTP',
             'LoadBalancerPort': 80,
-            'InstanceProtocol': 'tcp',
+            'InstanceProtocol': 'HTTP',
             'InstancePort': 5000    
             },
             ],

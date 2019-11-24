@@ -1,16 +1,10 @@
 import boto3
+import time
 
 def delete_instances(ec2,client):
     
     response = client.describe_addresses()
 
-    running_instances = ec2.instances.filter(Filters=[{
-        'Name': 'instance-state-name',
-        'Values': ['running']},
-        {"Name": "tag:Owner",
-        "Values": ["guilhermepl3"]}])
-
-    
     running_instances = ec2.instances.filter(Filters=[{
         'Name': 'instance-state-name',
         'Values': ['running']},
@@ -57,6 +51,7 @@ def nuke():
                     )
     except:
         print("a")
+
     response = elastic_client.describe_target_groups(Names=['TargetGroup-gpl'])
     response = elastic_client.delete_target_group(TargetGroupArn=response['TargetGroups'][0]['TargetGroupArn'])
     response = elb_client.delete_load_balancer(LoadBalancerName='LoadBalancer-gpl')
@@ -64,6 +59,9 @@ def nuke():
     response = client_ohio.describe_images(Filters=[{'Name': 'name','Values': ['fowarder_image']}])
     image_id = response['Images'][0]['ImageId']
     client_ohio.deregister_image(ImageId = image_id)
+
+    time.sleep(60)
+
     response = client_ohio.describe_security_groups(Filters=[dict(Name='group-name', Values=['SEC-leite-lb'])])
     group_id = response['SecurityGroups'][0]['GroupId']
     secgroup = ec2_ohio.SecurityGroup(group_id)  

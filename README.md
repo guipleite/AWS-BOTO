@@ -41,3 +41,6 @@ python3 ap3.py
 ```
 python3 nuke.py
 ```
+
+### Os scripts de instalação, serviços e aplicação client estão disponíveis no repositório:
+https://github.com/guipleite/Spark_REST

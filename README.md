@@ -43,4 +43,4 @@ python3 nuke.py
 ```
 
 ### Os scripts de instalação, serviços e aplicação client estão disponíveis no repositório:
-https://github.com/guipleite/Spark_REST
+https://github.com/guipleite/FLASK_REST
